@@ -1,0 +1,122 @@
+/* 1. Base Reset & Mobile-First Root */
+:root {
+    --primary-orange: #f97316;
+    --secondary-orange: #ea580c;
+    --success-green: #16a34a;
+    --bg-light: #f8fafc;
+    --card-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+}
+
+body {
+    background-color: var(--bg-light);
+    -webkit-tap-highlight-color: transparent;
+}
+
+/* 2. Plan Card Layout */
+.plan-card {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    border: 1px solid #e2e8f0;
+    display: flex;
+    align-items: center;
+    padding: 1rem;
+    background: white;
+    border-radius: 1rem;
+    margin-bottom: 0.75rem;
+}
+
+.plan-card:active {
+    transform: scale(0.98);
+    background-color: #fffaf8;
+}
+
+/* 3. The Duration Circle (The Visual Focus) */
+.duration-circle {
+    width: 65px;
+    height: 65px;
+    min-width: 65px;
+    border-radius: 50%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    line-height: 1;
+    font-weight: 800;
+    font-size: 0.875rem;
+    box-shadow: inset 0 -3px 0 rgba(0,0,0,0.1);
+}
+
+.duration-circle .unit {
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    opacity: 0.8;
+    margin-top: 2px;
+}
+
+/* 4. Voucher Input UI (High Contrast) */
+.voucher-input-group {
+    position: relative;
+    margin: 1.5rem 0;
+}
+
+.voucher-input {
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    font-family: 'Monaco', 'Consolas', monospace;
+    border: 2px solid #e2e8f0;
+    transition: border-color 0.3s ease;
+}
+
+.voucher-input:focus {
+    border-color: var(--primary-orange);
+    box-shadow: 0 0 0 4px rgba(249, 115, 22, 0.1);
+}
+
+/* 5. Free Trial Highlight (Urgency Design) */
+.free-trial-banner {
+    background: linear-gradient(135deg, #f97316 0%, #dc2626 100%);
+    position: relative;
+    overflow: hidden;
+}
+
+.free-trial-banner::after {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, rgba(255,255,255,0.2) 0%, transparent 70%);
+    pointer-events: none;
+}
+
+/* 6. Buy Buttons */
+.btn-buy {
+    background-color: var(--primary-orange);
+    color: white;
+    padding: 0.5rem 1.25rem;
+    border-radius: 9999px;
+    font-weight: 700;
+    font-size: 0.875rem;
+    box-shadow: 0 4px 6px -1px rgba(249, 115, 22, 0.3);
+}
+
+.btn-buy:active {
+    background-color: var(--secondary-orange);
+    box-shadow: none;
+}
+
+/* 7. Walled Garden Loader */
+.payment-loader {
+    width: 40px;
+    height: 40px;
+    border: 4px solid #f3f3f3;
+    border-top: 4px solid var(--primary-orange);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
