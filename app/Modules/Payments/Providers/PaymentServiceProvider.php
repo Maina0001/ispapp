@@ -1,17 +1,26 @@
 <?php
 
-namespace App\Modules\Network\Providers;
+namespace Modules\Payments\Providers;
 
 use Illuminate\Support\ServiceProvider;
+use Illuminate\Support\Facades\Route;
+use Modules\Payments\Interfaces\PaymentInitiatorInterface;
+use Modules\Payments\Services\MpesaInitiationService;
 
-class NetworkServiceProvider extends ServiceProvider
+class PaymentServiceProvider extends ServiceProvider
 {
     /**
      * Register any application services.
+     * This is where the Interface is bound to the Implementation.
      */
     public function register(): void
     {
-        //
+        // Whenever the app asks for the Initiator Interface, give them M-Pesa.
+        // To switch to Airtel, you only change the second class name here!
+        $this->app->bind(
+            PaymentInitiatorInterface::class,
+            MpesaInitiationService::class
+        );
     }
 
     /**
@@ -19,8 +28,22 @@ class NetworkServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        // This is the "Automated Fix"
-        // It tells Laravel to include this folder when running 'php artisan migrate'
-        $this->loadMigrationsFrom(__DIR__ . '/../Database/Migrations');
+        // 1. Load modular migrations (Transactions, Webhooks logs, etc.)
+        if ($this->app->runningInConsole()) {
+            $this->loadMigrationsFrom(__DIR__ . '/../Database/Migrations');
+        }
+
+        // 2. Load API Routes (For Webhooks/Callbacks)
+        $this->registerRoutes();
+    }
+
+    /**
+     * Register the routes for the payments module.
+     */
+    protected function registerRoutes(): void
+    {
+        Route::prefix('api/payments')
+            ->middleware('api')
+            ->group(__DIR__ . '/../Routes/api.php');
     }
 }

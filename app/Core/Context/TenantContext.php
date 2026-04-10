@@ -2,22 +2,27 @@
 
 namespace App\Core\Context;
 
+use Illuminate\Database\Eloquent\Model;
+
+/**
+ * Enterprise Singleton to manage the state of the current Tenant across the application lifecycle.
+ */
 class TenantContext
 {
     private ?int $tenantId = null;
-    private ?object $tenant = null;
+    private ?Model $tenant = null;
 
     /**
-     * Set the current active tenant.
+     * Sets the active tenant. This is usually called by the IdentifyTenant middleware.
      */
-    public function setTenant(object $tenant): void
+    public function setTenant(Model $tenant): void
     {
         $this->tenant = $tenant;
-        $this->tenantId = $tenant->id;
+        $this->tenantId = (int) $tenant->getKey();
     }
 
     /**
-     * Get the ID of the current tenant.
+     * Retrieve the current Tenant ID.
      */
     public function getTenantId(): ?int
     {
@@ -25,18 +30,27 @@ class TenantContext
     }
 
     /**
-     * Get the full tenant model instance.
+     * Retrieve the full Tenant Model (e.g., for accessing settings/branding).
      */
-    public function getTenant(): ?object
+    public function getTenant(): ?Model
     {
         return $this->tenant;
     }
 
     /**
-     * Check if a tenant has been identified.
+     * Boolean check for tenant presence.
      */
     public function hasTenant(): bool
     {
-        return !is_null($this->tenantId);
+        return $this->tenantId !== null;
+    }
+
+    /**
+     * Reset the context (useful for testing or CLI jobs processing multiple tenants).
+     */
+    public function reset(): void
+    {
+        $this->tenant = null;
+        $this->tenantId = null;
     }
 }

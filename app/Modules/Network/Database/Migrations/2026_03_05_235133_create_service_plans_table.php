@@ -11,10 +11,15 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('service_plans', function (Blueprint $table) {
-            $table->id();
-            $table->timestamps();
-        });
+       Schema::create('service_plans', function (Blueprint $table) {
+    $table->id();
+    $table->unsignedBigInteger('tenant_id')->index();
+    $table->string('name'); // e.g., "1 Hour Unlimited", "Daily 10Mbps"
+    $table->integer('duration_minutes'); // How long it lasts
+    $table->decimal('price', 10, 2);
+    $table->string('bandwidth_limit'); // MikroTik format: "5M/5M"
+    $table->timestamps();
+       });
     }
 
     /**

@@ -2,29 +2,33 @@
 
 namespace Modules\Payments\Jobs;
 
-use App\Core\Jobs\BaseJob; // Use the BaseJob for automatic context
-use Modules\Payments\Services\MpesaService;
+use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Foundation\Bus\Dispatchable;
+use Modules\Payments\Events\PaymentCompleted;
+use Modules\Payments\Models\MpesaTransaction;
 
-class ProcessMpesaCallback extends BaseJob
+class ProcessMpesaCallback implements ShouldQueue
 {
-    /**
-     * No need for Manual Traits (Queueable, etc.) as BaseJob has them.
-     */
-    public function __construct(
-        public array $callbackData,
-        ?int $tenant_id = null
-    ) {
-        // Pass the tenant_id to the parent constructor to register it for the worker
-        parent::__construct($tenant_id);
-    }
+    use Dispatchable, Queueable;
 
-    public function handle(MpesaService $mpesaService): void
+    public function __construct(protected MpesaTransaction $transaction) {}
+
+    public function handle()
     {
-        /**
-         * The 'RestoreTenantContext' middleware has already run at this point.
-         * Any database query inside $mpesaService->processCallback() 
-         * will automatically be scoped to the correct ISP.
-         */
-        $mpesaService->processCallback($this->callbackData);
+        $payload = $this->transaction->raw_payload;
+        $resultCode = data_get($payload, 'Body.stkCallback.ResultCode');
+
+        if ($resultCode === 0) {
+            // 1. Update Internal Status
+            $this->transaction->update(['status' => 'completed']);
+
+            // 2. Trigger the Global System Event
+            // The Billing module will hear this and clear the Invoice.
+            // The Network module will hear this and open the MikroTik gate.
+            event(new PaymentCompleted($this->transaction));
+        } else {
+            $this->transaction->update(['status' => 'failed']);
+        }
     }
 }

@@ -4,45 +4,44 @@ namespace Modules\Payments\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
 use Modules\Payments\Http\Requests\MpesaCallbackRequest;
 use Modules\Payments\Jobs\ProcessMpesaCallback;
-use Modules\Payments\Models\MpesaTransaction;
+use Modules\Payments\Interfaces\PaymentRepositoryInterface;
 use Illuminate\Support\Facades\Log;
 
-/**
- * Handles incoming callbacks from Safaricom Daraja API.
- */
 class MpesaWebhookController extends Controller
 {
     /**
-     * Receive and persist the M-Pesa callback data.
-     * * @param MpesaCallbackRequest $request
-     * @return JsonResponse
+     * We inject the Interface, not the Model.
+     * This is the "D" in SOLID (Dependency Inversion).
      */
+    public function __construct(
+        protected PaymentRepositoryInterface $repository
+    ) {}
+
     public function handleCallback(MpesaCallbackRequest $request): JsonResponse
     {
-        // 1. Log raw input for audit trail (Critical for payment disputes)
-        Log::channel('mpesa')->info('Callback Received', $request->all());
-
-        // 2. Persist the raw transaction state
-        // tenant_id is resolved via the 'CheckoutRequestID' mapping or URL parameter
-        $transaction = MpesaTransaction::create([
-            'merchant_request_id' => $request->input('Body.stkCallback.MerchantRequestID'),
-            'checkout_request_id' => $request->input('Body.stkCallback.CheckoutRequestID'),
-            'raw_payload'         => $request->all(),
-            'status'              => 'received',
-            'tenant_id'           => $request->route('tenant_id'), 
+        // 1. Domain Logging (Keep it specific to the payment channel)
+        Log::channel('mpesa')->info('M-Pesa Webhook Hit', [
+            'checkout_id' => $request->input('Body.stkCallback.CheckoutRequestID')
         ]);
 
-        // 3. Dispatch Job for heavy lifting (Validation, Ledger Entry, Service Restoration)
+        // 2. Persist via Repository
+        // The repository handles mapping the raw JSON to the database columns
+        $transaction = $this->repository->storeRawCallback(
+            $request->all(), 
+            $request->route('tenant_id') // Pass if not handled by middleware
+        );
+
+        // 3. Dispatch the Job
+        // We pass only the ID or the Model to keep the queue payload light
         ProcessMpesaCallback::dispatch($transaction)
             ->onQueue('payments');
 
-        // 4. Respond to Safaricom immediately to prevent retries
+        // 4. Immediate Safaricom Response (The "Contract" with Daraja)
         return response()->json([
             'ResultCode' => 0,
-            'ResultDesc' => 'Success'
+            'ResultDesc' => 'Accepted'
         ], 200);
     }
 }

@@ -12,7 +12,10 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        // Register TenantContext as a singleton so all modules share the same state
+    $this->app->singleton(\App\Core\Context\TenantContext::class, function ($app) {
+        return new \App\Core\Context\TenantContext();
+    });
     }
 
     /**

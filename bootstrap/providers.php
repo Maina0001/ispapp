@@ -9,4 +9,6 @@ return [
     App\Providers\Modules\Network\Providers\NetworkServiceProvider::class,
     App\Providers\Modules\Payments\Providers\PaymentsServiceProvider::class,
     App\Providers\Modules\Reporting\Providers\ReportingServiceProvider::class,
+    App\Providers\ModuleEventServiceProvider::class,
+    
 ];

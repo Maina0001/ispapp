@@ -3,55 +3,110 @@
 namespace App\Modules\Customer\Services;
 
 use App\Core\Abstract\BaseService;
-use App\Modules\Customer\Models\Customer;
-use App\Modules\Billing\Models\Subscription;
-use App\Modules\Network\Services\ProvisioningService;
-use App\Modules\Customer\Events\CustomerOnboarded;
+use Modules\Customer\Models\Customer;
+use Modules\Billing\Models\Subscription;
+use Modules\Network\Models\ServicePlan;
+use Modules\Network\Services\ProvisioningService;
+use Modules\Customer\Events\CustomerOnboarded;
+use App\Core\Context\TenantContext;
 
 class OnboardingService extends BaseService
 {
     public function __construct(
         protected ProvisioningService $provisioningService,
-        protected NotificationService $notificationService
+        protected TenantContext $tenantContext
+        // We removed NotificationService for now to keep it lean, add back if needed
     ) {}
 
     /**
-     * Entry point for a new installation.
+     * Entry point for Hotspot "Lazy" Onboarding.
+     * Triggered when a device hits the portal.
      */
-    public function onboardCustomer(Customer $customer, array $subscriptionData): void
+    public function onboardByMac(string $macAddress): Customer
     {
-        $this->transactional(function () use ($customer, $subscriptionData) {
-            // 1. Update customer status
+        return Customer::firstOrCreate(
+            ['mac_address' => $macAddress],
+            [
+                'tenant_id' => $this->tenantContext->getTenantId(),
+                'status'    => 'lead', // Initial state: "Just Browsing"
+                'username'  => 'guest_' . str_replace(':', '', $macAddress),
+                'password'  => bcrypt($macAddress),
+            ]
+        );
+    }
+
+    /**
+     * Triggered after a successful M-Pesa payment.
+     * Converts a 'lead' to 'active' and sets up the timer.
+     */
+    public function activateCustomer(Customer $customer, ServicePlan $plan): void
+    {
+        $this->transactional(function () use ($customer, $plan) {
+            
+            // 1. Update status to active
             $customer->update(['status' => 'active']);
 
-            // 2. Create the initial subscription
-            $subscription = $this->createSubscription($customer, $subscriptionData);
+            // 2. Create/Update Subscription using Plan duration
+            $subscription = $this->createSubscription($customer, $plan);
 
-            // 3. Provision Network Access (Radius/MikroTik)
-            $this->provisionInitialNetworkAccess($customer, $subscription);
+            // 3. Provision Network Access via the Network Module Driver
+            // We pass the plan so the driver knows the bandwidth limit (e.g. 5M/5M)
+            $this->provisioningService->provisionCustomerService($customer, $plan);
 
-            // 4. Send Welcome Comms
-            $this->notificationService->sendWelcomeNotification($customer);
-
-            // 5. Fire Event for secondary modules (e.g., Reporting)
+            // 4. Fire Event for secondary modules
             event(new CustomerOnboarded($customer, $subscription));
         });
     }
 
-    public function createSubscription(Customer $customer, array $data): Subscription
+    protected function createSubscription(Customer $customer, ServicePlan $plan): Subscription
     {
-        return Subscription::create([
-            'customer_id' => $customer->id,
-            'service_plan_id' => $data['plan_id'],
-            'status' => 'active',
-            'starts_at' => now(),
-            'expires_at' => now()->addMonth(), // Standard 30-day cycle
-        ]);
+        return Subscription::updateOrCreate(
+            ['customer_id' => $customer->id],
+            [
+                'tenant_id'      => $customer->tenant_id,
+                'plan_id'        => $plan->id,
+                'status'         => 'active',
+                'starts_at'      => now(),
+                // Logic: Add minutes from the ServicePlan row
+                'expires_at'     => now()->addMinutes($plan->duration_minutes),
+            ]
+        );
     }
+    /**
+ * Check if the customer can use a trial based on current time and history.
+ */
+public function checkTrialEligibility(Customer $customer): bool
+{
+    $now = now();
+    $start = now()->setTime(7, 0);
+    $end = now()->setTime(9, 0);
 
-    public function provisionInitialNetworkAccess(Customer $customer, Subscription $subscription): void
-    {
-        // Delegates to Network Module to handle Radius credentials and NAS sync
-        $this->provisioningService->initializeAccount($customer, $subscription);
-    }
+    // 1. Check Time Window
+    if (!$now->between($start, $end)) return false;
+
+    // 2. Check if they used it today
+    return !$customer->subscriptions()
+        ->where('is_trial', true)
+        ->where('created_at', '>=', now()->startOfDay())
+        ->exists();
+}
+
+/**
+ * Activate a temporary 30-minute access window.
+ */
+public function activateTrial(Customer $customer): void
+{
+    $this->transactional(function () use ($customer) {
+        $subscription = Subscription::create([
+            'customer_id' => $customer->id,
+            'tenant_id'   => $customer->tenant_id,
+            'status'      => 'active',
+            'is_trial'    => true,
+            'expires_at'  => now()->addMinutes(30),
+        ]);
+
+        // Trigger network access with a 'trial' speed profile
+        $this->provisioningService->provisionTrialAccess($customer);
+    });
+}
 }

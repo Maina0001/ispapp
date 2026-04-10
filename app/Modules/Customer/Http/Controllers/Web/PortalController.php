@@ -4,40 +4,50 @@ namespace Modules\Customer\Http\Controllers\Web;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
-use Modules\Network\Models\BandwidthProfile;
-use Modules\Network\Services\RadiusManager;
-use Modules\Network\Models\RadiusAccounting;
+use Modules\Customer\Services\OnboardingService;
+use Modules\Network\Models\ServicePlan;
+use Modules\Network\Services\ProvisioningService;
+use Illuminate\View\View;
+use Illuminate\Http\JsonResponse;
 
 class PortalController extends Controller
 {
+    public function __construct(
+        protected OnboardingService $onboardingService,
+        protected ProvisioningService $networkService
+    ) {}
+
     /**
-     * Display the Portal Landing Page
+     * Display the Portal Landing Page.
      * Captures MAC/IP from MikroTik and identifies the device.
      */
-    public function home(Request $request)
+    public function home(Request $request): View
     {
-        // Capture context from router redirect parameters
         $mac = $request->query('mac');
         $ip = $request->query('ip');
 
-        // Check for Free Trial eligibility (7:00 AM -> 9:00 AM)
-        $isEligibleForTrial = $this->checkTrialEligibility($mac);
+        // Decoupled: Silently onboard/find the customer record via MAC
+        $customer = $mac ? $this->onboardingService->onboardByMac($mac) : null;
+
+        // Check for Free Trial eligibility via the Service (Encapsulated logic)
+        $isEligibleForTrial = $customer ? $this->onboardingService->checkTrialEligibility($customer) : false;
 
         return view('customer::portal.home', [
             'mac' => $mac,
             'ip' => $ip,
+            'customer' => $customer,
             'isEligible' => $isEligibleForTrial
         ]);
     }
 
     /**
-     * Display Plan Catalogue
+     * Display Plan Catalogue.
+     * Replaced 'BandwidthProfile' with 'ServicePlan' for consistency.
      */
-    public function plans()
+    public function plans(): View
     {
-        // Only fetch profiles marked as 'public' for the Hotspot
-        $plans = BandwidthProfile::where('is_public', true)
+        // ServicePlans are automatically filtered by tenant_id in the BaseModel
+        $plans = ServicePlan::where('is_public', true)
             ->orderBy('price', 'asc')
             ->get();
 
@@ -45,48 +55,40 @@ class PortalController extends Controller
     }
 
     /**
-     * Voucher Entry View
+     * Activate the daily free trial.
      */
-    public function voucher()
+    public function activateFreeTrial(Request $request)
     {
-        return view('customer::portal.voucher');
+        $mac = $request->input('mac');
+        $customer = $this->onboardingService->onboardByMac($mac);
+
+        if (!$this->onboardingService->checkTrialEligibility($customer)) {
+            return redirect()->route('portal.error')->with('message', 'Trial limit reached.');
+        }
+
+        // Use the OnboardingService to handle the logic of "Trial" activation
+        // This calculates expiry and triggers the Network Driver
+        $this->onboardingService->activateTrial($customer);
+
+        return redirect()->route('portal.success', ['type' => 'trial']);
     }
 
     /**
-     * Post-Payment Success Page
-     * JS on this page will poll the payment status
+     * Reconnect User.
+     * Handles logic for users who still have active time.
      */
-    public function success(Request $request)
-    {
-        return view('customer::portal.success', [
-            'checkout_id' => $request->query('checkout_id')
-        ]);
-    }
-
-    /**
-     * Payment or Authentication Error View
-     */
-    public function error()
-    {
-        return view('customer::portal.error');
-    }
-
-    /**
-     * Reconnect User
-     * Handles logic for users with an active RADIUS session who were disconnected.
-     */
-    public function reconnect(Request $request)
+    public function reconnect(Request $request): JsonResponse
     {
         $mac = $request->input('mac');
         
-        // Check if device has a valid, non-expired session in RADIUS
-        $session = RadiusManager::getActiveSessionByMac($mac);
+        // Decoupled: Ask the Network Module if this MAC has an active session
+        $session = $this->networkService->getActiveSession($mac);
 
         if ($session) {
             return response()->json([
                 'success' => true,
-                'username' => $session->username,
-                'password' => $session->value, // Cleartext-Password
+                'username' => $session['username'],
+                'password' => $session['password'],
                 'login_url' => $request->session()->get('hs_link_login')
             ]);
         }
@@ -94,41 +96,20 @@ class PortalController extends Controller
         return response()->json(['success' => false, 'message' => 'No active session found.'], 404);
     }
 
-    /**
-     * Activate the 30-minute daily free trial
-     */
-    public function activateFreeTrial(Request $request)
+    public function success(Request $request): View
     {
-        $mac = $request->input('mac');
-
-        if (!$this->checkTrialEligibility($mac)) {
-            return back()->with('error', 'Trial currently unavailable or already used.');
-        }
-
-        // Trigger Provisioning (Network Module)
-        // Usually creates a temporary RADIUS account for 30 mins
-        RadiusManager::provisionTemporaryAccess($mac, $duration = 30);
-
-        return redirect()->route('portal.success', ['type' => 'trial']);
+        return view('customer::portal.success', [
+            'checkout_id' => $request->query('checkout_id')
+        ]);
     }
 
-    /**
-     * Internal Logic for Trial Windows
-     */
-    private function checkTrialEligibility($mac): bool
+    public function voucher(): View
     {
-        $now = now();
-        $start = now()->setTime(7, 0);
-        $end = now()->setTime(9, 0);
+        return view('customer::portal.voucher');
+    }
 
-        if (!$now->between($start, $end)) {
-            return false;
-        }
-
-        // Check if MAC has already used a trial in the last 24 hours
-        return !RadiusAccounting::where('callingstationid', $mac)
-            ->where('is_trial', true)
-            ->where('acctstarttime', '>=', now()->startOfDay())
-            ->exists();
+    public function error(): View
+    {
+        return view('customer::portal.error');
     }
 }
