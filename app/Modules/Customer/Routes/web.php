@@ -1,21 +1,20 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use Modules\Customer\Http\Controllers\Web\PortalController;
-
+use Modules\Customer\Http\Controllers\PortalController;
 /**
  * Captive Portal - Web Routes
  * These routes are accessible without internet (Walled Garden)
  */
 Route::group([
     'prefix' => 'portal',
-    'middleware' => ['web', 'tenant.resolve'] // tenant.resolve identifies the ISP/NAS context
+    //'middleware' => ['web', 'tenant.resolve'] // tenant.resolve identifies the ISP/NAS context
 ], function () {
 
     // --- View Routes ---
     
     // Landing Page: Entry point (detects MAC/IP from MikroTik)
-    Route::get('/', [PortalController::class, 'index'])->name('portal.home');
+    Route::get('/', [PortalController::class, 'plans'])->name('portal.home');
 
     // Catalogue: Displays the Sh5, Sh10, etc. cards from your screenshot
     Route::get('/plans', [PortalController::class, 'plans'])->name('portal.plans');

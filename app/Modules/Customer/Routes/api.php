@@ -1,41 +1,26 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use Modules\Customer\Http\Controllers\Api\V1\CustomerController;
-use Modules\Customer\Http\Controllers\Api\V1\CustomerStatusController;
-use Modules\Customer\Http\Controllers\Api\V1\StatusController;
-/**
- * Customer Module API V1 Routes
- * Prefix: /api/v1/customers
- */
+
 Route::prefix('v1')->group(function () {
 
+    // Onboarding
+    Route::post('customers/onboard', 'Modules\Customer\Http\Controllers\Api\V1\OnboardingController@onboard')->name('api.v1.customers.onboard');
 
-    // Standard RESTful API Resource
-    
-    // Provides: GET (index/show), POST (store), PUT/PATCH (update), DELETE (destroy)
-    Route::post('onboard', [OnboardingController.class, 'onboard']);
-    Route::apiResource('customers', CustomerController::class);
+    // Flat REST Routes
+    Route::get('customers', 'Modules\Customer\Http\Controllers\Api\V1\CustomerController@index')->name('api.v1.customers.index');
+    Route::post('customers', 'Modules\Customer\Http\Controllers\Api\V1\CustomerController@store')->name('api.v1.customers.store');
+    Route::get('customers/{customer}', 'Modules\Customer\Http\Controllers\Api\V1\CustomerController@show')->name('api.v1.customers.show');
+    Route::put('customers/{customer}', 'Modules\Customer\Http\Controllers\Api\V1\CustomerController@update')->name('api.v1.customers.update');
+    Route::delete('customers/{customer}', 'Modules\Customer\Http\Controllers\Api\V1\CustomerController@destroy')->name('api.v1.customers.destroy');
 
-    // Domain-Specific Actions (RPC Style)
-    Route::prefix('customers/{customer}')->group(function () {
-        // Handle customer lifecycle states
-        Route::post('suspend', [CustomerStatusController::class, 'suspend'])->name('customers.suspend');
-        Route::post('reactivate', [CustomerStatusController::class, 'reactivate'])->name('customers.reactivate');
-        
-        // Fetch module-specific related data (sub-resources)
-        Route::get('usage', [CustomerController::class, 'usage'])->name('customers.usage');
-        Route::get('billing-history', [CustomerController::class, 'billingHistory'])->name('customers.billing-history');
-    });
-    Route::prefix('v1/customer')->group(function () {
-    
-    Route::post('onboard', [OnboardingController.class, 'onboard']);
-    
-    // The Polling Endpoint
-    Route::get('payment-status/{checkoutId}', [StatusController.class, 'checkPayment'])
-         ->name('api.v1.customer.payment_status');
-    
-});
+    // Actions
+    Route::post('customers/{customer}/suspend', 'Modules\Customer\Http\Controllers\Api\V1\CustomerStatusController@suspend')->name('api.v1.customers.suspend');
+    Route::post('customers/{customer}/reactivate', 'Modules\Customer\Http\Controllers\Api\V1\CustomerStatusController@reactivate')->name('api.v1.customers.reactivate');
+    Route::get('customers/{customer}/usage', 'Modules\Customer\Http\Controllers\Api\V1\CustomerController@usage')->name('api.v1.customers.usage');
+    Route::get('customers/{customer}/billing-history', 'Modules\Customer\Http\Controllers\Api\V1\CustomerController@billingHistory')->name('api.v1.customers.billing-history');
 
+    // Payment Polling
+    Route::get('customer/payment-status/{checkoutId}', 'Modules\Customer\Http\Controllers\Api\V1\StatusController@checkPayment')->name('api.v1.customer.payment_status');
 
 });

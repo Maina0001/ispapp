@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Modules\Reporting\Providers;
+namespace Modules\Reporting\Providers;
 
 use Illuminate\Support\ServiceProvider;
 

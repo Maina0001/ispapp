@@ -10,21 +10,31 @@ class CustomerServiceProvider extends ServiceProvider
     public function boot(): void
     {
         // 1. Load standard Web routes (Blade views)
-        $this->loadRoutesFrom(__DIR__ . '/../Routes/web.php');
+        if (file_exists(__DIR__ . '/../Routes/web.php')) {
+            $this->loadRoutesFrom(__DIR__ . '/../Routes/web.php');
+        }
 
         // 2. Load Versioned API routes
         $this->registerApiRoutes();
 
         // 3. Load Migrations
-        $this->loadMigrationsFrom(__DIR__ . '/../Database/Migrations');
-        // Now you can use view('customer::portal.home')
-    $this->loadViewsFrom(__DIR__ . '/../Resources/views', 'customer');
+        if (is_dir(__DIR__ . '/../Database/Migrations')) {
+            $this->loadMigrationsFrom(__DIR__ . '/../Database/Migrations');
+        }
+        
+        // 4. Load Portal Views
+        if (is_dir(__DIR__ . '/../Resources/views')) {
+            $this->loadViewsFrom(__DIR__ . '/../Resources/views', 'customer');
+        }
     }
 
     protected function registerApiRoutes(): void
     {
-        Route::prefix('api')
-            ->middleware('api') // Applies rate limiting and JSON headers
-            ->group(__DIR__ . '/../Routes/api.php');
+        $apiPath = __DIR__ . '/../Routes/api.php';
+        if (file_exists($apiPath)) {
+            Route::prefix('api')
+                ->middleware('api') 
+                ->group($apiPath);
+        }
     }
 }

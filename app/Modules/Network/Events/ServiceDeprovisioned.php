@@ -4,11 +4,15 @@ namespace Modules\Network\Events;
 
 use Illuminate\Queue\SerializesModels;
 use Modules\Customer\Models\Customer;
+use Illuminate\Contracts\Queue\ShouldQueue;
+use illuminate\Contracts\Events\Dispatcher;
+use illuminate\Contracts\Events\ShouldDispatchAfterCommit;
+use Modules\Billing\Models\Subscription;
 
 /**
  * Triggered when a network service is permanently decommissioned.
  */
-class ServiceDeprovisioned
+class ServiceDeprovisioned implements ShouldDispatchAfterCommit
 {
     use SerializesModels;
 

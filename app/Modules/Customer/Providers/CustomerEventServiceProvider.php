@@ -20,7 +20,7 @@ class CustomerEventServiceProvider extends ServiceProvider
         CustomerRegistered::class => [
             SendWelcomeNotification::class,
         ],
-        CustomerUpdated::class => [
+        CustomerRegistered::class => [
             SyncCustomerToRadius::class,
         ],
         CustomerSuspended::class => [

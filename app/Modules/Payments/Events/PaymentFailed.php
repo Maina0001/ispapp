@@ -10,7 +10,7 @@ use Modules\Payments\Models\Payment;
  */
 class PaymentFailed
 {
-    use SerializesModels;
+    use SerializesModels, dispatchable;
 
     public ?int $tenant_id;
 

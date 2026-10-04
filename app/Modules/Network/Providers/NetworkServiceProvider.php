@@ -1,26 +1,34 @@
 <?php
 
-namespace App\Modules\Network\Providers;
+namespace Modules\Network\Providers;
 
 use Illuminate\Support\ServiceProvider;
+use Illuminate\Support\Facades\Route;
 
 class NetworkServiceProvider extends ServiceProvider
 {
-    /**
-     * Register any application services.
-     */
-    public function register(): void
+    public function boot(): void
     {
-        //
+        $this->mapApiRoutes();
+        $this->mapWebRoutes();
     }
 
     /**
-     * Bootstrap any application services.
+     * Internal Technical API routes (Auth & Tenant Required)
      */
-    public function boot(): void
+    protected function mapApiRoutes(): void
     {
-        // This is the "Automated Fix"
-        // It tells Laravel to include this folder when running 'php artisan migrate'
-        $this->loadMigrationsFrom(__DIR__ . '/../Database/Migrations');
+        Route::prefix('api')
+            ->middleware(['api', 'auth:sanctum', 'tenant.resolve'])
+            ->group(__DIR__ . '/../Routes/api.php');
+    }
+
+    /**
+     * External/Administrative Web routes
+     */
+    protected function mapWebRoutes(): void
+    {
+        Route::middleware('web')
+            ->group(__DIR__ . '/../Routes/web.php');
     }
 }

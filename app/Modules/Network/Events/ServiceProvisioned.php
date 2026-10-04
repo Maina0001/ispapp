@@ -5,11 +5,14 @@ namespace Modules\Network\Events;
 use Illuminate\Queue\SerializesModels;
 use Modules\Customer\Models\Customer;
 use Modules\Billing\Models\Subscription;
+use Illuminate\Contracts\Queue\ShouldQueue;
+use illuminate\Contracts\Events\Dispatcher;
+use illuminate\Contracts\Events\ShouldDispatchAfterCommit;
 
 /**
  * Represents the completion of the end-to-end technical onboarding.
  */
-class ServiceProvisioned
+class ServiceProvisioned implements ShouldDispatchAfterCommit
 {
     use SerializesModels;
 

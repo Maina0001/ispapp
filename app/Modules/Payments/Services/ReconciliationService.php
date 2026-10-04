@@ -5,7 +5,7 @@ namespace App\Modules\Payments\Services;
 class ReconciliationService
 {
     /**
-     * This service listens for PaymentCompleted and clears outstanding Invoices.
+     * This service listens for MpesaTransactionCompleted and clears outstanding Invoices.
      */
     public function settleInvoice($transaction)
     {

@@ -2,13 +2,12 @@
 
 return [
     App\Providers\AppServiceProvider::class,
-    App\Providers\Core\Providers\CoreServiceProvider::class,
     App\Providers\HorizonServiceProvider::class,
-    App\Providers\Modules\Billing\Providers\BillingServiceProvider::class,
-    App\Providers\Modules\Customer\Providers\CustomerServiceProvider::class,
-    App\Providers\Modules\Network\Providers\NetworkServiceProvider::class,
-    App\Providers\Modules\Payments\Providers\PaymentsServiceProvider::class,
-    App\Providers\Modules\Reporting\Providers\ReportingServiceProvider::class,
-    App\Providers\ModuleEventServiceProvider::class,
-    
+    Modules\Billing\Providers\BillingServiceProvider::class,
+    Modules\Customer\Providers\CustomerEventServiceProvider::class,
+    Modules\Customer\Providers\CustomerServiceProvider::class,
+    Modules\Network\Providers\NetworkEventServiceProvider::class,
+    Modules\Network\Providers\NetworkServiceProvider::class,
+    Modules\Payments\Providers\PaymentsServiceProvider::class,
+    Modules\Reporting\Providers\ReportingServiceProvider::class,
 ];

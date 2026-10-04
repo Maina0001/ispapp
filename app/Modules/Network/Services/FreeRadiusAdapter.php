@@ -3,6 +3,7 @@
 namespace App\Modules\Network\Services;
 
 use App\Modules\Network\Models\RadiusAccount;
+use Illuminate\Support\Str;
 
 class FreeRadiusAdapter
 {
@@ -10,13 +11,13 @@ class FreeRadiusAdapter
     {
         return RadiusAccount::updateOrCreate(
             [
-                'username' => $username,
-                'attribute' => 'Cleartext-Password'
+                'username'  => $username,
+                'attribute' => 'Cleartext-Password',
             ],
             [
-                'op' => ':=',
-                'value' => $password,
-                'tenant_id' => $tenantId
+                'op'        => ':=',
+                'value'     => $password,
+                'tenant_id' => $tenantId,
             ]
         );
     }
@@ -24,11 +25,16 @@ class FreeRadiusAdapter
     public function updateUser(RadiusAccount $account, array $data): void
     {
         if (isset($data['is_active']) && $data['is_active'] === false) {
-            // Force rejection in RADIUS
-            $account->update(['value' => 'DISABLED_BY_ADMIN_' . str_random(5)]);
+            // Force rejection in RADIUS by breaking the password
+            $account->update([
+                'value' => 'DISABLED_BY_ADMIN_' . Str::random(5),
+            ]);
+            return;
         } else {
             // Restore password (assuming MAC-as-Password)
-            $account->update(['value' => $account->username]);
+            $account->update([
+                'value' => $account->username,
+            ]);
         }
     }
 }

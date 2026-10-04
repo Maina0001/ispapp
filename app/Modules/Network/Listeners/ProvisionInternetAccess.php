@@ -2,67 +2,78 @@
 
 namespace Modules\Network\Listeners;
 
+use Carbon\Carbon;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Queue\InteractsWithQueue;
-use Modules\Payments\Events\PaymentReceived;
-use Modules\Network\Services\ProvisioningService;
-use Modules\Network\Models\ServicePlan;
-use Modules\Billing\Models\Subscription;
 use Illuminate\Support\Facades\Log;
-use Carbon\Carbon;
+use Modules\Billing\Events\SubscriptionCreated;
+use Modules\Billing\Models\Subscription;
+use Modules\Network\Models\ServicePlan;
+use Modules\Payments\Events\PaymentReceived;
 
 class ProvisionInternetAccess implements ShouldQueue
 {
     use InteractsWithQueue;
 
-    public $queue = 'network';
+    public string $queue = 'network';
 
-    public function __construct(
-        protected ProvisioningService $provisioningService
-    ) {}
+    public int $tries = 3;
+
+    public function backoff(): array
+    {
+        return [30, 120, 300];
+    }
 
     public function handle(PaymentReceived $event): void
     {
-        $transaction = $event->transaction;
+        $payment  = $event->payment;
+        $customer = $payment->customer;
 
-        // 1. Resolve the Service Plan (Package)
-        $plan = ServicePlan::find($transaction->plan_id);
-
-        if (!$plan) {
-            Log::error("Provisioning Error: Plan ID {$transaction->plan_id} not found.");
+        if (! $customer) {
+            Log::error("Provisioning: Payment {$payment->id} has no customer.");
             return;
         }
 
-        // 2. Calculate Expiry Date
-        // We use Carbon to add the duration from the package to the current time
-        $expiryDate = Carbon::now()->addMinutes($plan->duration_minutes);
+        // Resolve plan — prefer the payment's plan_id, fall back to customer's default
+        $planId = $payment->plan_id ?? $customer->plan_id;
+        $plan   = ServicePlan::find($planId);
 
-        // 3. Update or Create the Subscription
-        // This links the Customer to the Plan and sets the 'Grim Reaper' timer
+        if (! $plan) {
+            Log::error("Provisioning: Plan ID {$planId} not found for Payment {$payment->id}.");
+            return;
+        }
+
+        // Renewal-safe: if the customer has an unexpired active subscription,
+        // extend its expiry rather than overwriting it.
+        $existing = Subscription::where('customer_id', $customer->id)
+            ->where('status', 'active')
+            ->where('expires_at', '>', now())
+            ->latest('expires_at')
+            ->first();
+
+        $startsAt  = $existing?->starts_at ?? now();
+        $expiresAt = $existing
+            ? $existing->expires_at->copy()->addMinutes($plan->duration_minutes)
+            : Carbon::now()->addMinutes($plan->duration_minutes);
+
         $subscription = Subscription::updateOrCreate(
-            ['customer_id' => $transaction->customer_id],
             [
-                'tenant_id' => $transaction->tenant_id,
+                'customer_id' => $customer->id,
+                'status'      => 'active',
+            ],
+            [
+                'tenant_id'  => $payment->tenant_id,
                 'plan_id'    => $plan->id,
-                'status'     => 'active',
-                'starts_at'  => now(),
-                'expires_at' => $expiryDate,
+                'starts_at'  => $startsAt,
+                'expires_at' => $expiresAt,
             ]
         );
 
-        try {
-            // 4. Trigger Hardware Provisioning
-            // We pass the plan name so the MikroTik adapter can apply the correct speed profile
-            $this->provisioningService->provisionCustomerService(
-                $transaction->customer,
-                $plan
-            );
+        Log::info("Subscription {$subscription->id} ready for customer {$customer->id}, expires {$expiresAt->toDateTimeString()}");
 
-            Log::info("Hotspot Activated: MAC {$transaction->mac_address} expires at {$expiryDate->toDateTimeString()}");
-
-        } catch (\Exception $e) {
-            Log::error("Hardware Provisioning Failed: " . $e->getMessage());
-            throw $e; 
-        }
+        // Hand off to the network layer.
+        // ProvisionNetworkAccess listens to this and is the ONLY place
+        // that calls ProvisioningService::provisionCustomerService().
+        event(new SubscriptionCreated($subscription));
     }
 }

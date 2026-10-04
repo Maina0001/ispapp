@@ -211,44 +211,75 @@ return [
             'nice' => 0,
         ],
     ],
-
     'environments' => [
         'production' => [
-            'supervisor-1' => [
-                'maxProcesses' => 10,
-                'balanceMaxShift' => 1,
-                'balanceCooldown' => 3,
+            // Payments — critical, low latency, few jobs
+            'supervisor-payments' => [
+                'connection'          => 'redis',
+                'queue'               => ['payments'],
+                'balance'             => 'auto',
+                'autoScalingStrategy' => 'time',
+                'maxProcesses'        => 4,
+                'maxTime'             => 3600,
+                'maxJobs'             => 1000,
+                'memory'              => 512,
+                'tries'               => 3,
+                'timeout'             => 120,
+                'nice'                => 0,
+            ],
+
+            // Network — provisioning, RADIUS, MikroTik
+            'supervisor-network' => [
+                'connection'          => 'redis',
+                'queue'               => ['network'],
+                'balance'             => 'auto',
+                'autoScalingStrategy' => 'time',
+                'maxProcesses'        => 6,
+                'maxTime'             => 3600,
+                'maxJobs'             => 500,
+                'memory'              => 512,
+                'tries'               => 5,
+                'timeout'             => 300,
+                'nice'                => 0,
+            ],
+
+            // Notifications — SMS, email
+            'supervisor-notifications' => [
+                'connection'   => 'redis',
+                'queue'        => ['notifications'],
+                'balance'      => 'auto',
+                'maxProcesses' => 4,
+                'maxTime'      => 3600,
+                'maxJobs'      => 1000,
+                'memory'       => 256,
+                'tries'        => 3,
+                'timeout'      => 60,
+                'nice'         => 0,
+            ],
+
+            // Default — everything else
+            'supervisor-default' => [
+                'connection'   => 'redis',
+                'queue'        => ['default'],
+                'balance'      => 'auto',
+                'maxProcesses' => 4,
+                'maxTime'      => 3600,
+                'maxJobs'      => 1000,
+                'memory'       => 512,
+                'tries'        => 3,
+                'timeout'      => 120,
+                'nice'         => 0,
             ],
         ],
 
         'local' => [
             'supervisor-1' => [
+                'connection'   => 'redis',
+                'queue'        => ['payments', 'network', 'notifications', 'default'],
+                'balance'      => 'simple',
                 'maxProcesses' => 3,
+                'tries'        => 3,
             ],
         ],
-    ],
-
-    /*
-    |--------------------------------------------------------------------------
-    | File Watcher Configuration
-    |--------------------------------------------------------------------------
-    |
-    | The following list of directories and files will be watched when using
-    | the `horizon:listen` command. Whenever any directories or files are
-    | changed, Horizon will automatically restart to apply all changes.
-    |
-    */
-
-    'watch' => [
-        'app',
-        'bootstrap',
-        'config/**/*.php',
-        'database/**/*.php',
-        'public/**/*.php',
-        'resources/**/*.php',
-        'routes',
-        'composer.lock',
-        'composer.json',
-        '.env',
     ],
 ];

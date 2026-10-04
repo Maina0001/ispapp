@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Modules\Billing\Providers;
+namespace Modules\Billing\Providers;
 
 use Illuminate\Support\ServiceProvider;
 

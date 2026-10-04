@@ -1,11 +1,12 @@
 <?php
 
 use Illuminate\Support\Facades\Schedule;
-use Modules\Billing\Jobs\AutoSuspensionJob;
 
-/**
- * The System "Grim Reaper"
- * This checks every 60 seconds for users whose hotspot time has expired
- * and triggers the deprovisioning logic in the Network Module.
- */
-Schedule::job(new AutoSuspensionJob)->everyMinute();
+// Expire subscriptions that have passed their expiry date.
+
+//
+
+// Schedule::command('subscriptions:expire')->hourly();
+// Schedule::command('invoices:generate')->dailyAt('06:00');
+// Schedule::command('mpesa:verify-pending')->everyFiveMinutes();
+// Schedule::command('mpesa:reconcile')->dailyAt('02:00');
