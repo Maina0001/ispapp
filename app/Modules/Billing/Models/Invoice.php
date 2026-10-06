@@ -1,24 +1,29 @@
 <?php
 
-namespace App\Modules\Billing\Models;
+namespace Modules\Billing\Models;
 
 use App\Core\Abstract\BaseModel;
-use App\Modules\Customer\Models\Customer;
-use App\Modules\Payments\Models\Payment;
+use Modules\Customer\Models\Customer;
+use Modules\Payments\Models\Payment;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class Invoice extends BaseModel
 {
+    protected $table = 'invoices';
+
     protected $fillable = [
         'tenant_id',
         'customer_id',
         'invoice_number',
+        'amount',
+        'tax_amount',
         'total_amount',
         'amount_paid',
         'balance',
-        'status', // e.g., 'unpaid', 'partial', 'paid', 'cancelled'
+        'status', 
+        'due_date', // e.g., 'unpaid', 'partial', 'paid', 'cancelled'
         'due_at',
         'paid_at',
     ];
@@ -27,6 +32,7 @@ class Invoice extends BaseModel
         'total_amount' => 'decimal:2',
         'amount_paid' => 'decimal:2',
         'balance' => 'decimal:2',
+        'due_date' => 'date',
         'due_at' => 'datetime',
         'paid_at' => 'datetime',
     ];

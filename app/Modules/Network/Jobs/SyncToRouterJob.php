@@ -1,11 +1,11 @@
 <?php
 
-namespace App\Modules\Network\Jobs;
+namespace Modules\Network\Jobs;
 
 use App\Core\Jobs\BaseJob;
-use App\Modules\Customer\Models\Customer;
-use App\Modules\Network\Models\NAS; // The MikroTik Router model
-use App\Modules\Network\Services\MikroTikAdapter;
+use Modules\Customer\Models\Customer;
+use Modules\Network\Models\NAS; // The MikroTik Router model
+use Modules\Network\Services\MikroTikAdapter;
 use Illuminate\Support\Facades\Log;
 
 class SyncToRouterJob extends BaseJob

@@ -1,9 +1,9 @@
 <?php
 
-namespace App\Modules\Billing\Services;
+namespace Modules\Billing\Services;
 
-use App\Modules\Billing\Models\Subscription;
-use App\Modules\Network\Services\ProvisioningService;
+use Modules\Billing\Models\Subscription;
+use Modules\Network\Services\ProvisioningService;
 
 class SuspensionService
 {

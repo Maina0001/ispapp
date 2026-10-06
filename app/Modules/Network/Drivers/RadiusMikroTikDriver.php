@@ -1,11 +1,11 @@
 <?php
 
-namespace App\Modules\Network\Drivers;
+namespace Modules\Network\Drivers;
 
-use App\Modules\Customer\Models\Customer;
-use App\Modules\Network\Interfaces\NetworkDriverInterface;
-use App\Modules\Network\Services\MikroTikAdapter;
-use App\Modules\Network\Services\RadiusManager;
+use Modules\Customer\Models\Customer;
+use Modules\Network\Interfaces\NetworkDriverInterface;
+use Modules\Network\Services\MikroTikAdapter;
+use Modules\Network\Services\RadiusManager;
 use Illuminate\Support\Facades\Log;
 
 class RadiusMikroTikDriver implements NetworkDriverInterface

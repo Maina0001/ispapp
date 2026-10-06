@@ -1,10 +1,10 @@
 <?php
 
-namespace App\Modules\Billing\Models;
+namespace Modules\Billing\Models;
 
 use App\Core\Abstract\BaseModel;
-use App\Modules\Customer\Models\Customer;
-use App\Modules\Network\Models\ServicePlan;
+use Modules\Customer\Models\Customer;
+use Modules\Network\Models\ServicePlan;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Subscription extends BaseModel
@@ -12,6 +12,7 @@ class Subscription extends BaseModel
     protected $fillable = [
         'tenant_id',
         'customer_id',
+        'plan_id',
         'service_plan_id',
         'status', // 'active', 'suspended', 'expired', 'pending'
         'billing_cycle', // 'monthly', 'quarterly'
@@ -19,6 +20,7 @@ class Subscription extends BaseModel
         'expires_at',
         'suspended_at',
         'last_billed_at',
+        'auto_renew',
     ];
 
     protected $casts = [

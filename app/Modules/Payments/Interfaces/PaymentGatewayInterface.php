@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Modules\Payments\Interfaces;
+namespace Modules\Payments\Interfaces;
 
 interface PaymentGatewayInterface
 {

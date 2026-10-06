@@ -1,11 +1,11 @@
 <?php
 
-namespace App\Modules\Network\Services;
+namespace Modules\Network\Services;
 
-use App\Modules\Network\Events\RadiusAccountCreated;
-use App\Modules\Network\Events\RadiusAccountResumed;
-use App\Modules\Network\Events\RadiusAccountSuspended;
-use App\Modules\Network\Models\RadiusAccount;
+use Modules\Network\Events\RadiusAccountCreated;
+use Modules\Network\Events\RadiusAccountResumed;
+use Modules\Network\Events\RadiusAccountSuspended;
+use Modules\Network\Models\RadiusAccount;
 use Illuminate\Support\Facades\Log;
 use Throwable;
 

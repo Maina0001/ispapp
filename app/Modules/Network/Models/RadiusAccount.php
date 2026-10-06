@@ -1,9 +1,9 @@
 <?php
 
-namespace App\Modules\Network\Models;
+namespace Modules\Network\Models;
 
 use App\Core\Abstract\BaseModel;
-use App\Modules\Customer\Models\Customer;
+use Modules\Customer\Models\Customer;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class RadiusAccount extends BaseModel

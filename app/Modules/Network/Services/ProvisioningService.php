@@ -53,7 +53,7 @@ class ProvisioningService extends BaseService
                 // 2. Apply the plan's bandwidth profile.
                 $this->driver->updateBandwidth(
                     $identity,
-                    $plan->router_profile_name ?? 'default'
+                    $plan->bandwidth_limit ?? 'default'
                 );
 
                 // 3. Kick any stale session so the new rules take effect now.

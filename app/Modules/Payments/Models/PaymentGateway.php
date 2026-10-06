@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Modules\Payments\Models;
+namespace Modules\Payments\Models;
 
 use App\Core\Abstract\BaseModel;
 

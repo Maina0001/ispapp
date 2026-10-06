@@ -1,9 +1,9 @@
 <?php
 
-namespace App\Modules\Network\Services;
+namespace Modules\Network\Services;
 
-use App\Modules\Network\Models\RadiusAccount;
-use App\Modules\Network\Models\ServicePlan;
+use Modules\Network\Models\RadiusAccount;
+use Modules\Network\Models\ServicePlan;
 
 class BandwidthManager
 {

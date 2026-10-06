@@ -1,8 +1,8 @@
 <?php
 
-namespace App\Modules\Billing\Services;
+namespace Modules\Billing\Services;
 
-use App\Modules\Billing\Models\Subscription;
+use Modules\Billing\Models\Subscription;
 use Carbon\Carbon;
 
 class ProrationCalculator

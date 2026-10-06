@@ -1,11 +1,11 @@
 <?php
 
-namespace App\Modules\Reporting\Services;
+namespace Modules\Reporting\Services;
 
-use App\Modules\Billing\Models\Invoice;
-use App\Modules\Payments\Models\Payment;
-use App\Modules\Network\Models\RadiusAccounting;
-use App\Modules\Customer\Models\Customer;
+use Modules\Billing\Models\Invoice;
+use Modules\Payments\Models\Payment;
+use Modules\Network\Models\RadiusAccounting;
+use Modules\Customer\Models\Customer;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 

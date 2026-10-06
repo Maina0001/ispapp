@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Modules\Reporting\Models;
+namespace Modules\Reporting\Models;
 
 use App\Core\Abstract\BaseModel;
 

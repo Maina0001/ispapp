@@ -5,7 +5,7 @@ use Modules\Network\Http\Controllers\Api\V1\NasController;
 use Modules\Network\Http\Controllers\Api\V1\IpPoolController;
 use Modules\Network\Http\Controllers\Api\V1\RadiusAccountController;
 use Modules\Network\Http\Controllers\Api\V1\BandwidthProfileController;
-use App\Modules\Network\Http\Controllers\Api\V1\StatusController;
+use Modules\Network\Http\Controllers\Api\V1\StatusController;
 /**
  * Network Module API V1 Routes
  * Prefix: /api/v1/network

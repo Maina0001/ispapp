@@ -1,11 +1,11 @@
 <?php
 
-namespace App\Modules\Reporting\Services;
+namespace Modules\Reporting\Services;
 
 use App\Core\Abstract\BaseService;
-use App\Modules\Payments\Models\MpesaTransaction;
-use App\Modules\Payments\Models\Payment;
-use App\Modules\Reporting\Jobs\AuditMpesaDiscrepancyJob;
+use Modules\Payments\Models\MpesaTransaction;
+use Modules\Payments\Models\Payment;
+use Modules\Reporting\Jobs\AuditMpesaDiscrepancyJob;
 use Illuminate\Support\Facades\Log;
 
 class ReconciliationService extends BaseService

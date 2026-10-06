@@ -11,6 +11,7 @@ class ServicePlan extends BaseModel
         'name', 
         'duration_minutes', 
         'price', 
-        'bandwidth_limit'
+        'bandwidth_limit',
+        'is_public', // Whether the plan is available for public subscription
     ];
 }

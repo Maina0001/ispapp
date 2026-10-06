@@ -1,9 +1,9 @@
 <?php
 
-namespace App\Modules\Payments\Services;
+namespace Modules\Payments\Services;
 
-use App\Modules\Payments\Jobs\ProcessMpesaCallback;
-use App\Modules\Payments\Models\MpesaTransaction;
+use Modules\Payments\Jobs\ProcessMpesaCallback;
+use Modules\Payments\Models\MpesaTransaction;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use RuntimeException;

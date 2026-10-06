@@ -1,8 +1,8 @@
 <?php
 
-namespace App\Modules\Network\Services;
+namespace Modules\Network\Services;
 
-use App\Modules\Network\Models\RadiusAccount;
+use Modules\Network\Models\RadiusAccount;
 use Illuminate\Support\Str;
 
 class FreeRadiusAdapter

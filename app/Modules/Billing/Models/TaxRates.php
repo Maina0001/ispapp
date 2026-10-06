@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Modules\Billing\Models;
+namespace Modules\Billing\Models;
 
 use Illuminate\Database\Eloquent\Model;
 

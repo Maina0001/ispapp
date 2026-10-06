@@ -1,9 +1,9 @@
 <?php
 
-namespace App\Modules\Billing\Services;
+namespace Modules\Billing\Services;
 
-use App\Modules\Billing\Models\Invoice;
-use App\Modules\Billing\Models\Subscription;
+use Modules\Billing\Models\Invoice;
+use Modules\Billing\Models\Subscription;
 
 class InvoiceGenerator
 {

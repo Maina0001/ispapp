@@ -1,9 +1,9 @@
 <?php
 
-namespace App\Modules\Customer\Services;
+namespace Modules\Customer\Services;
 
-use App\Modules\Customer\Models\Customer;
-use App\Modules\Customer\Models\CustomerDocument;
+use Modules\Customer\Models\Customer;
+use Modules\Customer\Models\CustomerDocument;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 

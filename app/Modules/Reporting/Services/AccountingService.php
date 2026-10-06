@@ -1,11 +1,11 @@
 <?php
 
-namespace App\Modules\Reporting\Services;
+namespace Modules\Reporting\Services;
 
 use App\Core\Abstract\BaseService;
-use App\Modules\Billing\Models\Invoice;
-use App\Modules\Payments\Models\Payment;
-use App\Modules\Reporting\Events\BalanceReconciled;
+use Modules\Billing\Models\Invoice;
+use Modules\Payments\Models\Payment;
+use Modules\Reporting\Events\BalanceReconciled;
 
 class AccountingService extends BaseService
 {

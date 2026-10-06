@@ -1,12 +1,12 @@
 <?php
 
-namespace App\Modules\Payments\Services;
+namespace Modules\Payments\Services;
 
 use App\Core\Abstract\BaseService;
-use App\Modules\Billing\Events\InvoicePaid;
-use App\Modules\Billing\Models\Invoice;
-use App\Modules\Payments\Events\PaymentReceived;
-use App\Modules\Payments\Models\Payment;
+use Modules\Billing\Events\InvoicePaid;
+use Modules\Billing\Models\Invoice;
+use Modules\Payments\Events\PaymentReceived;
+use Modules\Payments\Models\Payment;
 
 class PaymentService extends BaseService
 {
@@ -33,17 +33,18 @@ class PaymentService extends BaseService
         $this->transactional(function () use ($payment) {
             $invoices = Invoice::where('customer_id', $payment->customer_id)
                 ->where('status', '!=', 'paid')
-                ->orderBy('due_at', 'asc')
+                ->orderBy('due_date', 'asc')
                 ->get();
 
-            $remainingFunds = $payment->amount;
+            $remainingFunds = (float) $payment->amount;
 
             foreach ($invoices as $invoice) {
                 if ($remainingFunds <= 0) {
                     break;
                 }
 
-                $paymentAmount = min($remainingFunds, $invoice->balance);
+                $currentBalance = (float) $invoice->balance;
+                $paymentAmount  = min($remainingFunds, $currentBalance);
 
                 if ($paymentAmount <= 0) {
                     continue;
@@ -55,17 +56,20 @@ class PaymentService extends BaseService
                     'tenant_id'      => $payment->tenant_id,
                 ]);
 
+                // Decrement balance and update status if fully settled
+                $newBalance = $currentBalance - $paymentAmount;
+
+                $invoice->update([
+                    'balance' => max(0, $newBalance),
+                    'status'  => $newBalance <= 0 ? 'paid' : $invoice->status,
+                    'paid_at' => $newBalance <= 0 ? now() : $invoice->paid_at,
+                ]);
+
                 $remainingFunds -= $paymentAmount;
 
-                // Check if invoice is now fully paid
-                if ($invoice->refresh()->balance <= 0) {
-                    $invoice->update([
-                        'status'  => 'paid',
-                        'paid_at' => now(),
-                    ]);
-
-                    // Triggers RestoreNetworkAccess and any other InvoicePaid listeners.
-                    event(new InvoicePaid($invoice));
+                if ($newBalance <= 0) {
+                    // Fire with a fresh instance so listeners see committed data.
+                    event(new InvoicePaid($invoice->fresh()));
                 }
             }
 

@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Modules\Customer\Services;
+namespace Modules\Customer\Services;
 
 use App\Core\Abstract\BaseService;
 use Modules\Customer\Models\Customer;

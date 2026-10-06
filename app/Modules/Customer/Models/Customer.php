@@ -1,31 +1,33 @@
 <?php
 
-namespace App\Modules\Customer\Models;
+namespace Modules\Customer\Models;
 
 use App\Core\Abstract\BaseModel;
-use App\Modules\Billing\Models\Subscription;
-use App\Modules\Billing\Models\Invoice;
+use Modules\Billing\Models\Subscription;
+use Modules\Billing\Models\Invoice;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Customer extends BaseModel
 {
     protected $fillable = [
         'tenant_id',
-        'first_name',
-        'last_name',
+        'name',
         'email',
         'phone_number',
         'id_number',      // National ID or Passport
         'address',
         'latitude',       // For installation mapping
         'longitude',
-        'status',         // 'active', 'inactive', 'lead'
+        'status',
+        'mac_address',
+        'service_expiry_at',
+        'last_payment_at', // 'active', 'inactive', 'lead'
         'billing_type',   // 'prepaid', 'postpaid'
     ];
 
     public function getFullNameAttribute(): string
     {
-        return "{$this->first_name} {$this->last_name}";
+        return $this->name;
     }
 
     public function subscriptions(): HasMany

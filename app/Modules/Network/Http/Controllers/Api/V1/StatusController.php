@@ -1,11 +1,11 @@
 <?php
 
-namespace App\Modules\Network\Http\Controllers\Api\V1;
+namespace Modules\Network\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
-use App\Modules\Network\Models\RadiusAccount;
+use Modules\Network\Models\RadiusAccount;
 
 class StatusController extends Controller
 {

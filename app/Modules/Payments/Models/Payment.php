@@ -1,10 +1,10 @@
 <?php
 
-namespace App\Modules\Payments\Models;
+namespace Modules\Payments\Models;
 
 use App\Core\Abstract\BaseModel;
-use App\Modules\Customer\Models\Customer;
-use App\Modules\Billing\Models\Invoice;
+use Modules\Customer\Models\Customer;
+use Modules\Billing\Models\Invoice;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
@@ -15,6 +15,9 @@ class Payment extends BaseModel
         'customer_id',
         'amount',
         'currency',
+        'gateway',
+        'gateway_reference',
+        'plan_id',
         'payment_method', // 'mpesa', 'bank', 'cash'
         'transaction_reference',
         'status',         // 'completed', 'pending', 'reversed'
@@ -34,7 +37,7 @@ class Payment extends BaseModel
     public function invoices(): BelongsToMany
     {
         return $this->belongsToMany(Invoice::class, 'invoice_payments')
-                    ->withPivot('amount_applied')
+                    ->withPivot('amount_applied', 'tenant_id')
                     ->withTimestamps();
     }
 }

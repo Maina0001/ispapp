@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Modules\Payments\Services;
+namespace Modules\Payments\Services;
 
 class ReconciliationService
 {

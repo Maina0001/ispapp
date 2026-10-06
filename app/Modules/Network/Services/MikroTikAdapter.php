@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Modules\Network\Services;
+namespace Modules\Network\Services;
 
 use RouterOS\Client; // Using the 'pear2/net_routeros' or 'routeros-api' package
 use RouterOS\Query;

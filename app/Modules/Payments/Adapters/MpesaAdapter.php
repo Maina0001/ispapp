@@ -1,9 +1,9 @@
 <?php
 
-namespace App\Modules\Payments\Adapters;
+namespace Modules\Payments\Adapters;
 
-use App\Modules\Payments\Interfaces\PaymentGatewayInterface;
-use App\Modules\Payments\Services\MpesaService;
+use Modules\Payments\Interfaces\PaymentGatewayInterface;
+use Modules\Payments\Services\MpesaService;
 
 class MpesaAdapter implements PaymentGatewayInterface
 {

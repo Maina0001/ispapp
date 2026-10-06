@@ -1,8 +1,8 @@
 <?php
 
-namespace App\Modules\Customer\Services;
+namespace Modules\Customer\Services;
 
-use App\Modules\Customer\Models\Customer;
+use Modules\Customer\Models\Customer;
 use Illuminate\Support\Facades\Log;
 
 class NotificationService
