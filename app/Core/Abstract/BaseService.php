@@ -37,10 +37,19 @@ abstract class BaseService
     protected function logError(Throwable $e, array $context = []): void
     {
         Log::error("[Service Error]: " . $e->getMessage(), array_merge([
-            'file' => $e->getFile(),
-            'line' => $e->getLine(),
-            'trace' => substr($e->getTraceAsString(), 0, 500)
+            'file'  => $e->getFile(),
+            'line'  => $e->getLine(),
+            'trace' => substr($e->getTraceAsString(), 0, 500),
         ], $context));
+    }
+
+    /**
+     * Informational activity log — used by services to record
+     * business-level events (provisioning, deprovisioning, etc.).
+     */
+    protected function logActivity(string $message, array $context = []): void
+    {
+        Log::info($message, $context);
     }
 
     /**

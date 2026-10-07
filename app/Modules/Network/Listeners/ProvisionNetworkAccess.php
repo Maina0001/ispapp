@@ -27,6 +27,7 @@ class ProvisionNetworkAccess implements ShouldQueue
 
     public function handle(SubscriptionCreated $event): void
     {
+    
         $subscription = $event->subscription;
         $customer     = $subscription->customer;
         $plan         = $subscription->plan;
@@ -47,7 +48,7 @@ class ProvisionNetworkAccess implements ShouldQueue
         }
 
         try {
-            $this->provisioningService->provisionCustomerService($customer, $plan);
+            $this->provisioningService->provisionCustomerService($subscription);
 
             Log::info('ProvisionNetworkAccess: customer provisioned.', [
                 'tenant_id'       => $subscription->tenant_id,

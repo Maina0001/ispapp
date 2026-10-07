@@ -1,0 +1,27 @@
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    public function up(): void
+    {
+        Schema::create('radcheck', function (Blueprint $table) {
+            $table->increments('id');
+            $table->string('username', 64)->default('')->index();
+            $table->string('attribute', 64)->default('');
+            $table->string('op', 2)->default('==');
+            $table->string('value', 253)->default('');
+
+            // Your multi-tenant extension
+            $table->unsignedBigInteger('tenant_id')->nullable()->index();
+        });
+    }
+
+    public function down(): void
+    {
+        Schema::dropIfExists('radcheck');
+    }
+};

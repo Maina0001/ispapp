@@ -3,19 +3,19 @@
 namespace Modules\Customer\Services;
 
 use App\Core\Abstract\BaseService;
-use Modules\Customer\Models\Customer;
+use App\Core\Context\TenantContext;
+use Modules\Billing\Events\SubscriptionCreated;
 use Modules\Billing\Models\Subscription;
+use Modules\Customer\Events\CustomerOnboarded;
+use Modules\Customer\Models\Customer;
 use Modules\Network\Models\ServicePlan;
 use Modules\Network\Services\ProvisioningService;
-use Modules\Customer\Events\CustomerOnboarded;
-use App\Core\Context\TenantContext;
 
 class OnboardingService extends BaseService
 {
     public function __construct(
         protected ProvisioningService $provisioningService,
-        protected TenantContext $tenantContext
-        // We removed NotificationService for now to keep it lean, add back if needed
+        protected TenantContext $tenantContext,
     ) {}
 
     /**
@@ -28,85 +28,56 @@ class OnboardingService extends BaseService
             ['mac_address' => $macAddress],
             [
                 'tenant_id' => $this->tenantContext->getTenantId(),
-                'status'    => 'lead', // Initial state: "Just Browsing"
-                'username'  => 'guest_' . str_replace(':', '', $macAddress),
-                'password'  => bcrypt($macAddress),
+                'status'    => 'lead',
+                'name'      => 'Guest ' . substr($macAddress, -8),
             ]
         );
     }
 
     /**
-     * Triggered after a successful M-Pesa payment.
-     * Converts a 'lead' to 'active' and sets up the timer.
+     * Convert a 'lead' to 'active'.
+     *
+     * Does NOT provision directly. It creates the Subscription and fires
+     * SubscriptionCreated, which triggers the standard event chain:
+     *   SubscriptionCreated → ProvisionNetworkAccess → ProvisioningService.
      */
     public function activateCustomer(Customer $customer, ServicePlan $plan): void
     {
         $this->transactional(function () use ($customer, $plan) {
-            
-            // 1. Update status to active
             $customer->update(['status' => 'active']);
 
-            // 2. Create/Update Subscription using Plan duration
             $subscription = $this->createSubscription($customer, $plan);
 
-            // 3. Provision Network Access via the Network Module Driver
-            // We pass the plan so the driver knows the bandwidth limit (e.g. 5M/5M)
-            $this->provisioningService->provisionCustomerService($customer, $plan);
-
-            // 4. Fire Event for secondary modules
+            event(new SubscriptionCreated($subscription));
             event(new CustomerOnboarded($customer, $subscription));
         });
     }
 
+    /**
+     * Renewal-safe: extends expiry if there's an active subscription;
+     * creates a new one otherwise.
+     */
     protected function createSubscription(Customer $customer, ServicePlan $plan): Subscription
     {
+        $existing = Subscription::where('customer_id', $customer->id)
+            ->where('status', 'active')
+            ->where('expires_at', '>', now())
+            ->latest('expires_at')
+            ->first();
+
+        $startsAt  = $existing?->starts_at ?? now();
+        $expiresAt = $existing
+            ? $existing->expires_at->copy()->addMinutes($plan->duration_minutes)
+            : now()->addMinutes($plan->duration_minutes);
+
         return Subscription::updateOrCreate(
-            ['customer_id' => $customer->id],
+            ['customer_id' => $customer->id, 'status' => 'active'],
             [
-                'tenant_id'      => $customer->tenant_id,
-                'plan_id'        => $plan->id,
-                'status'         => 'active',
-                'starts_at'      => now(),
-                // Logic: Add minutes from the ServicePlan row
-                'expires_at'     => now()->addMinutes($plan->duration_minutes),
+                'tenant_id'  => $customer->tenant_id,
+                'plan_id'    => $plan->id,
+                'starts_at'  => $startsAt,
+                'expires_at' => $expiresAt,
             ]
         );
     }
-    /**
- * Check if the customer can use a trial based on current time and history.
- */
-public function checkTrialEligibility(Customer $customer): bool
-{
-    $now = now();
-    $start = now()->setTime(7, 0);
-    $end = now()->setTime(9, 0);
-
-    // 1. Check Time Window
-    if (!$now->between($start, $end)) return false;
-
-    // 2. Check if they used it today
-    return !$customer->subscriptions()
-        ->where('is_trial', true)
-        ->where('created_at', '>=', now()->startOfDay())
-        ->exists();
-}
-
-/**
- * Activate a temporary 30-minute access window.
- */
-public function activateTrial(Customer $customer): void
-{
-    $this->transactional(function () use ($customer) {
-        $subscription = Subscription::create([
-            'customer_id' => $customer->id,
-            'tenant_id'   => $customer->tenant_id,
-            'status'      => 'active',
-            'is_trial'    => true,
-            'expires_at'  => now()->addMinutes(30),
-        ]);
-
-        // Trigger network access with a 'trial' speed profile
-        $this->provisioningService->provisionTrialAccess($customer);
-    });
-}
 }

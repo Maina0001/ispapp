@@ -32,11 +32,11 @@ class Subscription extends BaseModel
 
     public function customer(): BelongsTo
     {
-        return $this->belongsTo(Customer::class);
+        return $this->belongsTo(\Modules\Customer\Models\Customer::class, 'customer_id');
     }
 
     public function plan(): BelongsTo
     {
-        return $this->belongsTo(ServicePlan::class, 'service_plan_id');
+        return $this->belongsTo(\Modules\Network\Models\ServicePlan::class, 'plan_id');
     }
 }
